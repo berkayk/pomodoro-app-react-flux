@@ -1,0 +1,36 @@
+{
+  "name": "pomodoro",
+  "version": "1.0.0",
+  "description": "Sample Pomodoro App Using React and Flux",
+  "main": "index.php",
+  "dependencies": {
+    "babel-preset-react": "^6.3.13",
+    "react-dom": "^0.14.6",
+    "babelify": "^7.2.0",
+    "flux": "^2.1.1",
+    "react": "^0.14.6"
+  },
+  "devDependencies": {
+    "jsx-loader": "^0.13.2",
+    "object-assign": "^4.0.1"
+  },
+  "scripts": {
+    "pack": "webpack"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/berkayk/pomodoro-app-react-flux.git"
+  },
+  "keywords": [
+    "react",
+    "flux",
+    "pomodoro",
+    "laravel"
+  ],
+  "author": "Berkay Kaya",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/berkayk/pomodoro-app-react-flux/issues"
+  },
+  "homepage": "https://github.com/berkayk/pomodoro-app-react-flux#readme"
+}
