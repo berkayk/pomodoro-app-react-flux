@@ -9,7 +9,8 @@ var Timer = React.createClass({
     },
     render: function() {
         return (
-            <div>{this.props.minutes}:{this.props.seconds}</div>
+            <div className="text-xs-center m-a-3">
+                <h1 className="display-3">{this.props.minutes}:{this.props.seconds}</h1></div>
         )
     }
 });

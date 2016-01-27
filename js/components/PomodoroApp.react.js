@@ -1,13 +1,17 @@
 var React = require('react');
+var ReactDOM = require('react-dom');
+// Components
 var Header = require('./Header.react');
+var ModeControls = require('./ModeControls.react');
 var ActionControls = require('./ActionControls.react');
 var Timer = require('./Timer.react');
+var PomoCount = require('./PomoCount.react');
+var Footer = require('./Footer.react');
+// Store
 var PomoStore = require('../stores/PomoStore');
 var PomoConstants = require('../constants/PomoConstants');
 
-function initState() {
-    var timeLeft = PomoStore.getTimeLeft();
-    console.log("Store timeLeft: " + timeLeft);
+function formMinuteSeconds(timeLeft) {
     var minutes = Math.floor(timeLeft / 60);
     if (minutes < 10)
         minutes = "0" + minutes;
@@ -17,8 +21,15 @@ function initState() {
     return {
         timeLeft: timeLeft,
         minutes: minutes,
-        seconds: seconds
+        seconds: seconds,
+        count: PomoStore.getPomodoroCount(),
+        mode: PomoStore.getCurrentMode()
     }
+}
+
+function initState() {
+    var timeLeft = PomoStore.getTimeLeft();
+    return formMinuteSeconds(timeLeft);
 }
 
 var PomodoroApp = React.createClass({
@@ -28,29 +39,25 @@ var PomodoroApp = React.createClass({
     _setMode: function() {
         this.setState(initState());
     },
+    _pause: function() {
+        clearInterval(this.interval);
+    },
     _start: function() {
         this.interval = setInterval(this._tick, 1000);
     },
     _tick: function() {
         var timeLeft = this.state.timeLeft - 1;
-
-        console.log("Tick timeLeft: " + timeLeft);
-        var minutes = Math.floor(timeLeft / 60);
-        if (minutes < 10)
-            minutes = "0" + minutes;
-        var seconds = timeLeft % 60;
-        if (seconds < 10)
-            seconds = "0" + seconds;
-        this.setState({
-            timeLeft: timeLeft,
-            minutes: minutes,
-            seconds: seconds
-        });
+        this.setState(formMinuteSeconds(timeLeft));
 
         if (timeLeft == 0) {
+            PomoStore.pomodoroComplete();
             console.log("Clearing interval.");
             clearInterval(this.interval);
 
+            var player = this.refs.player;
+            if (player) {
+                player.play();
+            }
         }
     },
     componentDidMount: function() {
@@ -71,16 +78,24 @@ var PomodoroApp = React.createClass({
     _onChanged: function() {
         console.log("onChange.");
         var currentState = PomoStore.getCurrentState();
-        if (currentState == PomoConstants.STATE_RUNNING) {
-            this._start();
+        switch (currentState) {
+            case PomoConstants.STATE_RUNNING:
+                this._start();
+                break;
+            case PomoConstants.STATE_PAUSED:
+                this._pause();
+                break;
         }
     },
     render: function() {
         return (
-            <div>
+            <div className="container">
                 <Header />
+                <PomoCount count={this.state.count}/>
+                <ModeControls mode={this.state.mode} />
                 <Timer minutes={this.state.minutes} seconds={this.state.seconds}/>
                 <ActionControls />
+                <Footer />
             </div>
         );
     }

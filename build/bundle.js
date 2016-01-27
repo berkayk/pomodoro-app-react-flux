@@ -19653,15 +19653,19 @@
 /***/ function(module, exports, __webpack_require__) {
 
 	/** @jsx React.DOM */var React = __webpack_require__(1);
+	var ReactDOM = __webpack_require__(158);
+	// Components
 	var Header = __webpack_require__(160);
-	var ActionControls = __webpack_require__(161);
+	var ModeControls = __webpack_require__(161);
+	var ActionControls = __webpack_require__(169);
 	var Timer = __webpack_require__(170);
-	var PomoStore = __webpack_require__(162);
-	var PomoConstants = __webpack_require__(169);
+	var PomoCount = __webpack_require__(171);
+	var Footer = __webpack_require__(172);
+	// Store
+	var PomoStore = __webpack_require__(173);
+	var PomoConstants = __webpack_require__(168);
 
-	function initState() {
-	    var timeLeft = PomoStore.getTimeLeft();
-	    console.log("Store timeLeft: " + timeLeft);
+	function formMinuteSeconds(timeLeft) {
 	    var minutes = Math.floor(timeLeft / 60);
 	    if (minutes < 10)
 	        minutes = "0" + minutes;
@@ -19671,8 +19675,15 @@
 	    return {
 	        timeLeft: timeLeft,
 	        minutes: minutes,
-	        seconds: seconds
+	        seconds: seconds,
+	        count: PomoStore.getPomodoroCount(),
+	        mode: PomoStore.getCurrentMode()
 	    }
+	}
+
+	function initState() {
+	    var timeLeft = PomoStore.getTimeLeft();
+	    return formMinuteSeconds(timeLeft);
 	}
 
 	var PomodoroApp = React.createClass({displayName: "PomodoroApp",
@@ -19682,29 +19693,25 @@
 	    _setMode: function() {
 	        this.setState(initState());
 	    },
+	    _pause: function() {
+	        clearInterval(this.interval);
+	    },
 	    _start: function() {
 	        this.interval = setInterval(this._tick, 1000);
 	    },
 	    _tick: function() {
 	        var timeLeft = this.state.timeLeft - 1;
-
-	        console.log("Tick timeLeft: " + timeLeft);
-	        var minutes = Math.floor(timeLeft / 60);
-	        if (minutes < 10)
-	            minutes = "0" + minutes;
-	        var seconds = timeLeft % 60;
-	        if (seconds < 10)
-	            seconds = "0" + seconds;
-	        this.setState({
-	            timeLeft: timeLeft,
-	            minutes: minutes,
-	            seconds: seconds
-	        });
+	        this.setState(formMinuteSeconds(timeLeft));
 
 	        if (timeLeft == 0) {
+	            PomoStore.pomodoroComplete();
 	            console.log("Clearing interval.");
 	            clearInterval(this.interval);
 
+	            var player = this.refs.player;
+	            if (player) {
+	                player.play();
+	            }
 	        }
 	    },
 	    componentDidMount: function() {
@@ -19725,16 +19732,24 @@
 	    _onChanged: function() {
 	        console.log("onChange.");
 	        var currentState = PomoStore.getCurrentState();
-	        if (currentState == PomoConstants.STATE_RUNNING) {
-	            this._start();
+	        switch (currentState) {
+	            case PomoConstants.STATE_RUNNING:
+	                this._start();
+	                break;
+	            case PomoConstants.STATE_PAUSED:
+	                this._pause();
+	                break;
 	        }
 	    },
 	    render: function() {
 	        return (
-	            React.createElement("div", null, 
+	            React.createElement("div", {className: "container"}, 
 	                React.createElement(Header, null), 
+	                React.createElement(PomoCount, {count: this.state.count}), 
+	                React.createElement(ModeControls, {mode: this.state.mode}), 
 	                React.createElement(Timer, {minutes: this.state.minutes, seconds: this.state.seconds}), 
-	                React.createElement(ActionControls, null)
+	                React.createElement(ActionControls, null), 
+	                React.createElement(Footer, null)
 	            )
 	        );
 	    }
@@ -19748,10 +19763,32 @@
 /***/ function(module, exports, __webpack_require__) {
 
 	/** @jsx React.DOM */var React = __webpack_require__(1);
-	var PomoActions = __webpack_require__(171);
-	var PomoConstants = __webpack_require__(169);
 
 	var Header = React.createClass({displayName: "Header",
+	   render: function() {
+	       return (
+	           React.createElement("div", null, 
+	               React.createElement("h1", {className: "text-xs-center m-a-2"}, 
+	                   React.createElement("img", {width: "50", className: "img m-r-1", src: "assets/img/tomato-small.png"}), 
+	                   React.createElement("span", {className: "text-danger"}, "pomodo"), React.createElement("b", {className: "text-info"}, "react")
+	               ), 
+	               React.createElement("audio", {ref: "player", src: "assets/sound/clock-short.mp3"})
+	           )
+	       );
+	   }
+	});
+
+	module.exports = Header;
+
+/***/ },
+/* 161 */
+/***/ function(module, exports, __webpack_require__) {
+
+	/** @jsx React.DOM */var React = __webpack_require__(1);
+	var PomoActions = __webpack_require__(162);
+	var PomoConstants = __webpack_require__(168);
+
+	var ModeControls = React.createClass({displayName: "ModeControls",
 	    getInitialState: function() {
 	        return null;
 	    },
@@ -19762,10 +19799,14 @@
 
 	    },
 	    render: function(){
-	        return (React.createElement("div", null, 
-	            React.createElement("button", {onClick: this._onSetPomodoro}, "Pomodoro"), 
-	            React.createElement("button", {onClick: this._onSetShortBreak}, "Short"), 
-	            React.createElement("button", {onClick: this._onSetLongBreak}, "Long")
+	        var pomoClasses = this.props.mode == PomoConstants.MODE_POMODORO ? "btn btn-danger m-r-1 animated swing" : "btn btn-danger-outline m-r-1";
+	        var shortBreakClasses = this.props.mode == PomoConstants.MODE_SHORT_BREAK ? "btn btn-info m-r-1 animated swing" : "btn btn-info-outline m-r-1";
+	        var longBreakClasses = this.props.mode == PomoConstants.MODE_LONG_BREAK ? "btn btn-info m-r-1 animated swing" : "btn btn-info-outline m-r-1";
+	        return (React.createElement("div", {className: "text-xs-center"}, 
+	            React.createElement("a", {className: "text-muted m-r-1 hint--left", "data-hint": "You can select your timer setup here."}, React.createElement("i", {className: "fa fa-question-circle"})), 
+	            React.createElement("a", {className: pomoClasses, onClick: this._onSetPomodoro}, "Pomodoro"), 
+	            React.createElement("a", {className: shortBreakClasses, onClick: this._onSetShortBreak}, "Short Break"), 
+	            React.createElement("a", {className: longBreakClasses, onClick: this._onSetLongBreak}, "Long Break")
 	            ));
 	    },
 	    _onSetPomodoro: function() {
@@ -19782,135 +19823,43 @@
 	    }
 	});
 
-	module.exports = Header;
-
-/***/ },
-/* 161 */
-/***/ function(module, exports, __webpack_require__) {
-
-	/** @jsx React.DOM */var React = __webpack_require__(1);
-
-	var ActionControls = React.createClass({displayName: "ActionControls",
-	    getInitialState: function() {
-	        return null;
-	    },
-	    componentDidMount: function() {
-
-	    },
-	    componentWillMount: function() {
-
-	    },
-	    render: function(){
-	        return (React.createElement("div", null, 
-	            React.createElement("button", null, "Start"), 
-	            React.createElement("button", null, "Stop"), 
-	            React.createElement("button", null, "Reset")
-	            ));
-	    }
-	});
-
-	module.exports = ActionControls;
+	module.exports = ModeControls;
 
 /***/ },
 /* 162 */
 /***/ function(module, exports, __webpack_require__) {
 
-	/** @jsx React.DOM */var AppDispatcher = __webpack_require__(163);
-	var EventEmitter = __webpack_require__(168).EventEmitter;
-	var PomoConstants = __webpack_require__(169);
-	var assign = __webpack_require__(167);
+	/** @jsx React.DOM *//**
+	 * Created by berkay on 1/26/2016.
+	 */
+	var AppDispatcher = __webpack_require__(163);
+	var PomoConstants = __webpack_require__(168);
 
-	var _pomodoroCount = 0;
-	var _timeLeft = 25;
-	var _mode = PomoConstants.MODE_POMODORO;
-	var _currentState = PomoConstants.STATE_STOPPED;
-
-	var EVENT_STATE_CHANGED = 'state_changed';
-	var EVENT_MODE_CHANGED = 'mode_changed';
-
-	function setMode(mode) {
-	    _mode = mode;
-	    switch (mode) {
-	        case PomoConstants.MODE_POMODORO:
-	            _timeLeft = 25;
-	            PomoStore.emitModeChanged(_currentState);
-	            break;
-	        case PomoConstants.MODE_SHORT_BREAK:
-	            _timeLeft = 5;
-	            PomoStore.emitModeChanged(_currentState);
-	            break;
-	        case PomoConstants.MODE_LONG_BREAK:
-	            _timeLeft = 10;
-	            PomoStore.emitModeChanged(_currentState);
-	            break;
-	        default:
-	            console.log("Shouldn't happen. Invalid mode: " + mode);
+	var PomoActions = {
+	    setMode: function(mode) {
+	        AppDispatcher.handleViewAction({
+	            type: PomoConstants.ACTION_SET_MODE,
+	            mode: mode
+	        });
+	    },
+	    start: function() {
+	        AppDispatcher.handleViewAction({
+	            type: PomoConstants.ACTION_START
+	        });
+	    },
+	    pause: function() {
+	        AppDispatcher.handleViewAction({
+	            type: PomoConstants.ACTION_PAUSE
+	        });
+	    },
+	    reset: function() {
+	        AppDispatcher.handleViewAction({
+	            type: PomoConstants.ACTION_RESET
+	        });
 	    }
-	}
+	};
 
-	function start() {
-	    console.log("Starting pomodoro at store.");
-	    if (_currentState == PomoConstants.STATE_RUNNING) {
-	        return;
-	    }
-
-	    if (_currentState == PomoConstants.STATE_STOPPED) {
-	        _timeLeft = 25;
-	        _pomodoroCount++;
-	        _currentState = PomoConstants.STATE_RUNNING;
-	        PomoStore.emitChanged(_currentState);
-	    }
-	    else {
-	        _currentState = PomoConstants.STATE_RUNNING;
-	        PomoStore.emitChanged(_currentState);
-	    }
-	}
-
-
-	var PomoStore = assign({}, EventEmitter.prototype, {
-	    getTimeLeft: function() {
-	        return _timeLeft;
-	    },
-	    getCurrentState: function() {
-	        return _currentState;
-	    },
-	    getPomodoroCount: function() {
-	        return _pomodoroCount;
-	    },
-	    emitChanged: function(state) {
-	        this.emit(EVENT_STATE_CHANGED, state);
-	    },
-	    emitModeChanged: function() {
-	        this.emit(EVENT_MODE_CHANGED, _mode);
-	    },
-	    addStateChangeListener: function(callback) {
-	        this.on(EVENT_STATE_CHANGED, callback);
-	    },
-	    removeStateChangeListener: function(callback) {
-	        this.removeListener(EVENT_STATE_CHANGED, callback);
-	    },
-	    addModeChangeListener: function(callback) {
-	        this.on(EVENT_MODE_CHANGED, callback);
-	    },
-	    removeModeChangeListener: function(callback) {
-	        this.removeListener(EVENT_MODE_CHANGED, callback);
-	    },
-	    dispatcherIndex: AppDispatcher.register(function(event) {
-	        console.log("Dispatcher received action: " + JSON.stringify(event));
-	        if (event.source == PomoConstants.DISPATCH_SOURCE_VIEW) {
-	            // View Actions
-	            switch(event.action.type) {
-	                case PomoConstants.ACTION_SET_MODE:
-	                    setMode(event.action.mode);
-	                    break;
-	            }
-	        }
-
-	        return true; // No errors. Needed by promise in Dispatcher.
-	    })
-	});
-
-	module.exports = PomoStore;
+	module.exports = PomoActions;
 
 /***/ },
 /* 163 */
@@ -19918,7 +19867,7 @@
 
 	/** @jsx React.DOM */var Dispatcher = __webpack_require__(164).Dispatcher;
 	var assign = __webpack_require__(167);
-	var PomoConstants = __webpack_require__(169);
+	var PomoConstants = __webpack_require__(168);
 
 	// This is different from the original docs
 	var AppDispatcher = assign(new Dispatcher(), {
@@ -20295,6 +20244,290 @@
 /* 168 */
 /***/ function(module, exports) {
 
+	/** @jsx React.DOM */var constants = {
+	    ACTION_SET_MODE: "ACTION_SET_MODE",
+	    ACTION_START: "ACTION_START",
+	    ACTION_PAUSE: "ACTION_PAUSE",
+	    ACTION_RESET: "ACTION_RESET",
+
+	    STATE_RUNNING: "STATE_RUNNING",
+	    STATE_PAUSED: "STATE_PAUSED",
+
+	    MODE_POMODORO: "MODE_POMODORO",
+	    MODE_SHORT_BREAK: "MODE_SHORT_BREAK",
+	    MODE_LONG_BREAK: "MODE_LONG_BREAK",
+
+	    DISPATCH_SOURCE_VIEW: "DISPATCH_SOURCE_VIEW",
+	    DISPATCH_SOURCE_SERVER: "DISPATCH_SOURCE_SERVER",
+
+	    // Intervals, 25 min, 5 min and 10 min
+	    INTERVAL_POMODORO: 25 * 60,
+	    INTERVAL_SHORT_BREAK: 5 * 60,
+	    INTERVAL_LONG_BREAK: 10 * 60
+	};
+
+	module.exports = constants;
+
+/***/ },
+/* 169 */
+/***/ function(module, exports, __webpack_require__) {
+
+	/** @jsx React.DOM */var React = __webpack_require__(1);
+	var PomoActions = __webpack_require__(162);
+
+	var ActionControls = React.createClass({displayName: "ActionControls",
+	    getInitialState: function() {
+	        return null;
+	    },
+	    componentDidMount: function() {
+
+	    },
+	    componentWillMount: function() {
+
+	    },
+	    render: function(){
+	        return (React.createElement("div", {className: "text-xs-center"}, 
+	            React.createElement("a", {className: "text-muted m-r-1 hint--left", "data-hint": "You can start, pause and reset your timer here."}, React.createElement("i", {className: "fa fa-question-circle"})), 
+	            React.createElement("button", {className: "btn btn-success m-r-1", onClick: this._onStart}, "Start"), 
+	            React.createElement("button", {className: "btn btn-default m-r-1", onClick: this._onPause}, "Pause"), 
+	            React.createElement("button", {className: "btn btn-danger", onClick: this._onReset}, "Reset")
+	            ));
+	    },
+	    _onStart: function() {
+	        PomoActions.start();
+	    },
+	    _onPause: function() {
+	        PomoActions.pause();
+	    },
+	    _onReset: function() {
+	        PomoActions.reset();
+	    }
+	});
+
+	module.exports = ActionControls;
+
+/***/ },
+/* 170 */
+/***/ function(module, exports, __webpack_require__) {
+
+	/** @jsx React.DOM *//**
+	 * Created by berkay on 1/26/2016.
+	 */
+	var React = __webpack_require__(1);
+
+	var Timer = React.createClass({displayName: "Timer",
+	    getInitialState: function() {
+	        return null;
+	    },
+	    render: function() {
+	        return (
+	            React.createElement("div", {className: "text-xs-center m-a-3"}, 
+	                React.createElement("h1", {className: "display-3"}, this.props.minutes, ":", this.props.seconds))
+	        )
+	    }
+	});
+
+	module.exports = Timer;
+
+/***/ },
+/* 171 */
+/***/ function(module, exports, __webpack_require__) {
+
+	/** @jsx React.DOM *//**
+	 * Created by berkay on 1/26/2016.
+	 */
+	var React = __webpack_require__(1);
+
+	var PomoCount = React.createClass({displayName: "PomoCount",
+	    getInitialState: function() {
+	        return null;
+	    },
+	    render: function() {
+	        return (
+	            React.createElement("div", {className: "text-xs-center"}, 
+	                React.createElement("h1", {className: "display-4"}, this.props.count), 
+	                "Pomodoros Complete Today!", 
+	                React.createElement("hr", null)
+	            )
+	        )
+	    }
+	});
+
+	module.exports = PomoCount;
+
+/***/ },
+/* 172 */
+/***/ function(module, exports, __webpack_require__) {
+
+	/** @jsx React.DOM */var React = __webpack_require__(1);
+
+	var Footer = React.createClass({displayName: "Footer",
+	    render: function() {
+	        return (
+	            React.createElement("div", null, 
+	                React.createElement("hr", {className: "m-t-3"}), 
+	                React.createElement("div", {className: "m-t-3 row"}, 
+	                    React.createElement("div", {className: "col-sm-6"}, 
+	                        React.createElement("div", null, 
+	                            React.createElement("h4", {className: "m-b-1"}, "What is Pomodoro Technique?"), 
+	                            React.createElement("p", null, "The Pomodoro Technique is a time management method developed by Francesco Cirillo in the late 1980s." + " " +
+	                                "The technique uses a timer to break down work into intervals, traditionally 25 minutes in length," + " " +
+	                                "separated by short breaks. Details can be found ", React.createElement("a", {href: "http://pomodorotechnique.com/", target: "_blank"}, "here"), ".")
+	                        ), 
+	                        React.createElement("div", {className: "m-t-2"}, 
+	                            React.createElement("h4", {className: "m-b-1"}, "Is there a tutorial?"), 
+	                            React.createElement("p", null, "Yes! I am currently writing a tutorial covering both React and Flux.")
+	                        )
+	                    ), 
+	                    React.createElement("div", {className: "col-sm-6"}, 
+	                        React.createElement("div", null, 
+	                            React.createElement("h4", {className: "m-b-1"}, "Simple Instructions"), 
+	                            React.createElement("div", null, "It is really easy to use a pomodoro timer." + " " +
+	                                "First you decide on a task that you need to complete." + " " +
+	                                "After deciding on the task, just select the red pomodoro button up there and press the green ", React.createElement("span", {className: "text-success"}, "START"), " button." + " " +
+	                                "When the timer is finished, you are free to take a break. After 3 short breaks, you may have a long break. "), 
+	                            React.createElement("br", null), 
+	                            React.createElement("p", null, "Rinse and repeat.")
+	                        )
+	                    )
+	                )
+	            )
+	        );
+	    }
+	});
+
+	module.exports = Footer;
+
+/***/ },
+/* 173 */
+/***/ function(module, exports, __webpack_require__) {
+
+	/** @jsx React.DOM */var AppDispatcher = __webpack_require__(163);
+	var EventEmitter = __webpack_require__(174).EventEmitter;
+	var PomoConstants = __webpack_require__(168);
+	var assign = __webpack_require__(167);
+
+
+	var _pomodoroCount = 0;
+	var _timeLeft = PomoConstants.INTERVAL_POMODORO;
+	var _mode = PomoConstants.MODE_POMODORO;
+	var _currentState = PomoConstants.STATE_PAUSED;
+
+	var EVENT_STATE_CHANGED = 'state_changed';
+	var EVENT_MODE_CHANGED = 'mode_changed';
+
+	function setMode(mode) {
+	    _mode = mode;
+	    switch (mode) {
+	        case PomoConstants.MODE_POMODORO:
+	            _timeLeft = PomoConstants.INTERVAL_POMODORO;
+	            PomoStore.emitModeChanged();
+	            break;
+	        case PomoConstants.MODE_SHORT_BREAK:
+	            _timeLeft = PomoConstants.INTERVAL_SHORT_BREAK;
+	            PomoStore.emitModeChanged();
+	            break;
+	        case PomoConstants.MODE_LONG_BREAK:
+	            _timeLeft = PomoConstants.INTERVAL_LONG_BREAK;
+	            PomoStore.emitModeChanged();
+	            break;
+	        default:
+	            console.log("Shouldn't happen. Invalid mode: " + mode);
+	    }
+	}
+
+	function start() {
+	    console.log("Starting pomodoro at store.");
+	    if (_currentState == PomoConstants.STATE_PAUSED) {
+	        _timeLeft = 25;
+	        _currentState = PomoConstants.STATE_RUNNING;
+	        PomoStore.emitStateChanged();
+	    }
+	}
+
+	function pause() {
+	    console.log("Entered pause.");
+	    if (_currentState == PomoConstants.STATE_RUNNING) {
+	        // emit only if timer is running
+	        _currentState = PomoConstants.STATE_PAUSED;
+	        PomoStore.emitStateChanged();
+	    }
+	}
+
+	function reset() {
+	    console.log("Entered reset.");
+	    setMode(_mode);
+	    _currentState = PomoConstants.STATE_PAUSED;
+	    PomoStore.emitStateChanged();
+	}
+
+
+	var PomoStore = assign({}, EventEmitter.prototype, {
+	    getTimeLeft: function() {
+	        return _timeLeft;
+	    },
+	    getCurrentState: function() {
+	        return _currentState;
+	    },
+	    getCurrentMode: function() {
+	        return _mode;
+	    },
+	    pomodoroComplete: function() {
+	        console.log("Entered pomodoroComplete!");
+	        _pomodoroCount++;
+	        reset();
+	    },
+	    getPomodoroCount: function() {
+	        return _pomodoroCount;
+	    },
+	    emitStateChanged: function() {
+	        this.emit(EVENT_STATE_CHANGED, _currentState);
+	    },
+	    emitModeChanged: function() {
+	        this.emit(EVENT_MODE_CHANGED, _mode);
+	    },
+	    addStateChangeListener: function(callback) {
+	        this.on(EVENT_STATE_CHANGED, callback);
+	    },
+	    removeStateChangeListener: function(callback) {
+	        this.removeListener(EVENT_STATE_CHANGED, callback);
+	    },
+	    addModeChangeListener: function(callback) {
+	        this.on(EVENT_MODE_CHANGED, callback);
+	    },
+	    removeModeChangeListener: function(callback) {
+	        this.removeListener(EVENT_MODE_CHANGED, callback);
+	    },
+	    dispatcherIndex: AppDispatcher.register(function(event) {
+	        console.log("Dispatcher received action: " + JSON.stringify(event));
+	        if (event.source == PomoConstants.DISPATCH_SOURCE_VIEW) {
+	            // View Actions
+	            switch(event.action.type) {
+	                case PomoConstants.ACTION_SET_MODE:
+	                    setMode(event.action.mode);
+	                    break;
+	                case PomoConstants.ACTION_START:
+	                    start();
+	                    break;
+	                case PomoConstants.ACTION_PAUSE:
+	                    pause();
+	                    break;
+	                case PomoConstants.ACTION_RESET:
+	                    reset();
+	                    break;
+	            }
+	        }
+
+	        return true; // No errors. Needed by promise in Dispatcher.
+	    })
+	});
+
+	module.exports = PomoStore;
+
+/***/ },
+/* 174 */
+/***/ function(module, exports) {
+
 	/** @jsx React.DOM */// Copyright Joyent, Inc. and other Node contributors.
 	//
 	// Permission is hereby granted, free of charge, to any person obtaining a
@@ -20594,71 +20827,6 @@
 	  return arg === void 0;
 	}
 
-
-/***/ },
-/* 169 */
-/***/ function(module, exports) {
-
-	/** @jsx React.DOM */var constants = {
-	    ACTION_SET_MODE: "ACTION_SET_MODE",
-
-	    STATE_STOPPED: "STATE_STOPPED",
-	    STATE_RUNNING: "STATE_RUNNING",
-	    STATE_PAUSED: "STATE_PAUSED",
-
-	    MODE_POMODORO: "MODE_POMODORO",
-	    MODE_SHORT_BREAK: "MODE_SHORT_BREAK",
-	    MODE_LONG_BREAK: "MODE_LONG_BREAK",
-
-	    DISPATCH_SOURCE_VIEW: "DISPATCH_SOURCE_VIEW",
-	    DISPATCH_SOURCE_SERVER: "DISPATCH_SOURCE_SERVER"
-
-	};
-
-	module.exports = constants;
-
-/***/ },
-/* 170 */
-/***/ function(module, exports, __webpack_require__) {
-
-	/** @jsx React.DOM *//**
-	 * Created by berkay on 1/26/2016.
-	 */
-	var React = __webpack_require__(1);
-
-	var Timer = React.createClass({displayName: "Timer",
-	    getInitialState: function() {
-	        return null;
-	    },
-	    render: function() {
-	        return (
-	            React.createElement("div", null, this.props.minutes, ":", this.props.seconds)
-	        )
-	    }
-	});
-
-	module.exports = Timer;
-
-/***/ },
-/* 171 */
-/***/ function(module, exports, __webpack_require__) {
-
-	/** @jsx React.DOM *//**
-	 * Created by berkay on 1/26/2016.
-	 */
-	var AppDispatcher = __webpack_require__(163);
-	var PomoConstants = __webpack_require__(169);
-
-	var PomoActions = {
-	    setMode: function(mode) {
-	        AppDispatcher.handleViewAction({
-	            type: PomoConstants.ACTION_SET_MODE,
-	            mode: mode
-	        });
-	    }
-	};
-
-	module.exports = PomoActions;
 
 /***/ }
 /******/ ]);

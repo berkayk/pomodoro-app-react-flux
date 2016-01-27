@@ -3,10 +3,11 @@ var EventEmitter = require('events').EventEmitter;
 var PomoConstants = require('../constants/PomoConstants');
 var assign = require('object-assign');
 
+
 var _pomodoroCount = 0;
-var _timeLeft = 25;
+var _timeLeft = PomoConstants.INTERVAL_POMODORO;
 var _mode = PomoConstants.MODE_POMODORO;
-var _currentState = PomoConstants.STATE_STOPPED;
+var _currentState = PomoConstants.STATE_PAUSED;
 
 var EVENT_STATE_CHANGED = 'state_changed';
 var EVENT_MODE_CHANGED = 'mode_changed';
@@ -15,16 +16,16 @@ function setMode(mode) {
     _mode = mode;
     switch (mode) {
         case PomoConstants.MODE_POMODORO:
-            _timeLeft = 25;
-            PomoStore.emitModeChanged(_currentState);
+            _timeLeft = PomoConstants.INTERVAL_POMODORO;
+            PomoStore.emitModeChanged();
             break;
         case PomoConstants.MODE_SHORT_BREAK:
-            _timeLeft = 5;
-            PomoStore.emitModeChanged(_currentState);
+            _timeLeft = PomoConstants.INTERVAL_SHORT_BREAK;
+            PomoStore.emitModeChanged();
             break;
         case PomoConstants.MODE_LONG_BREAK:
-            _timeLeft = 10;
-            PomoStore.emitModeChanged(_currentState);
+            _timeLeft = PomoConstants.INTERVAL_LONG_BREAK;
+            PomoStore.emitModeChanged();
             break;
         default:
             console.log("Shouldn't happen. Invalid mode: " + mode);
@@ -33,20 +34,27 @@ function setMode(mode) {
 
 function start() {
     console.log("Starting pomodoro at store.");
-    if (_currentState == PomoConstants.STATE_RUNNING) {
-        return;
-    }
-
-    if (_currentState == PomoConstants.STATE_STOPPED) {
+    if (_currentState == PomoConstants.STATE_PAUSED) {
         _timeLeft = 25;
-        _pomodoroCount++;
         _currentState = PomoConstants.STATE_RUNNING;
-        PomoStore.emitChanged(_currentState);
+        PomoStore.emitStateChanged();
     }
-    else {
-        _currentState = PomoConstants.STATE_RUNNING;
-        PomoStore.emitChanged(_currentState);
+}
+
+function pause() {
+    console.log("Entered pause.");
+    if (_currentState == PomoConstants.STATE_RUNNING) {
+        // emit only if timer is running
+        _currentState = PomoConstants.STATE_PAUSED;
+        PomoStore.emitStateChanged();
     }
+}
+
+function reset() {
+    console.log("Entered reset.");
+    setMode(_mode);
+    _currentState = PomoConstants.STATE_PAUSED;
+    PomoStore.emitStateChanged();
 }
 
 
@@ -57,11 +65,19 @@ var PomoStore = assign({}, EventEmitter.prototype, {
     getCurrentState: function() {
         return _currentState;
     },
+    getCurrentMode: function() {
+        return _mode;
+    },
+    pomodoroComplete: function() {
+        console.log("Entered pomodoroComplete!");
+        _pomodoroCount++;
+        reset();
+    },
     getPomodoroCount: function() {
         return _pomodoroCount;
     },
-    emitChanged: function(state) {
-        this.emit(EVENT_STATE_CHANGED, state);
+    emitStateChanged: function() {
+        this.emit(EVENT_STATE_CHANGED, _currentState);
     },
     emitModeChanged: function() {
         this.emit(EVENT_MODE_CHANGED, _mode);
@@ -85,6 +101,15 @@ var PomoStore = assign({}, EventEmitter.prototype, {
             switch(event.action.type) {
                 case PomoConstants.ACTION_SET_MODE:
                     setMode(event.action.mode);
+                    break;
+                case PomoConstants.ACTION_START:
+                    start();
+                    break;
+                case PomoConstants.ACTION_PAUSE:
+                    pause();
+                    break;
+                case PomoConstants.ACTION_RESET:
+                    reset();
                     break;
             }
         }

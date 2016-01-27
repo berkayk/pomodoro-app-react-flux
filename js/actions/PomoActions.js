@@ -10,6 +10,21 @@ var PomoActions = {
             type: PomoConstants.ACTION_SET_MODE,
             mode: mode
         });
+    },
+    start: function() {
+        AppDispatcher.handleViewAction({
+            type: PomoConstants.ACTION_START
+        });
+    },
+    pause: function() {
+        AppDispatcher.handleViewAction({
+            type: PomoConstants.ACTION_PAUSE
+        });
+    },
+    reset: function() {
+        AppDispatcher.handleViewAction({
+            type: PomoConstants.ACTION_RESET
+        });
     }
 };
 
