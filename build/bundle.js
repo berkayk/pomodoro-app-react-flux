@@ -19671,7 +19671,16 @@
 	    var seconds = timeLeft % 60;
 	    if (seconds < 10)
 	        seconds = "0" + seconds;
+
+	    var title = "(" + minutes + ":" + seconds + ") left in your ";
+	    var mode = PomoStore.getCurrentMode();
+	    if (mode == PomoConstants.MODE_POMODORO) {
+	        title += "pomodoro";
+	    } else
+	        title += "break";
+
 	    return {
+	        title: title,
 	        timeLeft: timeLeft,
 	        minutes: minutes,
 	        seconds: seconds,
@@ -19701,6 +19710,8 @@
 	    _tick: function() {
 	        var timeLeft = this.state.timeLeft - 1;
 	        this.setState(formMinuteSeconds(timeLeft));
+
+	        document.title = this.state.title;
 
 	        if (timeLeft == 0) {
 	            PomoStore.timerComplete();
