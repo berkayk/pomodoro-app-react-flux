@@ -13,11 +13,11 @@ var ModeControls = React.createClass({
 
     },
     render: function(){
-        var pomoClasses = this.props.mode == PomoConstants.MODE_POMODORO ? "btn btn-danger m-r-1 animated swing" : "btn btn-danger-outline m-r-1";
-        var shortBreakClasses = this.props.mode == PomoConstants.MODE_SHORT_BREAK ? "btn btn-info m-r-1 animated swing" : "btn btn-info-outline m-r-1";
-        var longBreakClasses = this.props.mode == PomoConstants.MODE_LONG_BREAK ? "btn btn-info m-r-1 animated swing" : "btn btn-info-outline m-r-1";
+        var pomoClasses = this.props.mode == PomoConstants.MODE_POMODORO ? "btn btn-danger m-b-1 m-r-1 animated swing" : "btn btn-danger-outline m-b-1 m-r-1";
+        var shortBreakClasses = this.props.mode == PomoConstants.MODE_SHORT_BREAK ? "btn btn-info m-b-1 m-r-1 animated swing" : "btn btn-info-outline m-b-1 m-r-1";
+        var longBreakClasses = this.props.mode == PomoConstants.MODE_LONG_BREAK ? "btn btn-info m-b-1 m-r-1 animated swing" : "btn btn-info-outline m-b-1 m-r-1";
         return (<div className="text-xs-center">
-            <a className="text-muted m-r-1 hint--left" data-hint="You can select your timer setup here."><i className="fa fa-question-circle" ></i></a>
+            <a className="hidden-sm-down text-muted m-r-1 hint--left" data-hint="You can select your timer setup here."><i className="fa fa-question-circle" ></i></a>
             <a className={pomoClasses} onClick={this._onSetPomodoro}>Pomodoro</a>
             <a className={shortBreakClasses} onClick={this._onSetShortBreak}>Short Break</a>
             <a className={longBreakClasses} onClick={this._onSetLongBreak}>Long Break</a>

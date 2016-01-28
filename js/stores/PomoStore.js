@@ -68,9 +68,10 @@ var PomoStore = assign({}, EventEmitter.prototype, {
     getCurrentMode: function() {
         return _mode;
     },
-    pomodoroComplete: function() {
-        console.log("Entered pomodoroComplete!");
-        _pomodoroCount++;
+    timerComplete: function() {
+        if (_mode == PomoConstants.MODE_POMODORO) {
+            _pomodoroCount++;
+        }
         reset();
     },
     getPomodoroCount: function() {

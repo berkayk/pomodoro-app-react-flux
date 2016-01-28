@@ -19660,9 +19660,8 @@
 	var ActionControls = __webpack_require__(169);
 	var Timer = __webpack_require__(170);
 	var PomoCount = __webpack_require__(171);
-	var Footer = __webpack_require__(172);
 	// Store
-	var PomoStore = __webpack_require__(173);
+	var PomoStore = __webpack_require__(172);
 	var PomoConstants = __webpack_require__(168);
 
 	function formMinuteSeconds(timeLeft) {
@@ -19704,7 +19703,7 @@
 	        this.setState(formMinuteSeconds(timeLeft));
 
 	        if (timeLeft == 0) {
-	            PomoStore.pomodoroComplete();
+	            PomoStore.timerComplete();
 	            console.log("Clearing interval.");
 	            clearInterval(this.interval);
 
@@ -19721,9 +19720,11 @@
 	    componentWillUnmount: function() {
 	        PomoStore.removeStateChangeListener(this._onChanged);
 	        PomoStore.removeStateChangeListener(this._onModeChanged);
+	        /*
 	        if (this.interval) {
 	            clearInterval(this.interval);
 	        }
+	        */
 	    },
 	    _onModeChanged: function() {
 	        console.log("Mode changed.");
@@ -19748,8 +19749,7 @@
 	                React.createElement(PomoCount, {count: this.state.count}), 
 	                React.createElement(ModeControls, {mode: this.state.mode}), 
 	                React.createElement(Timer, {minutes: this.state.minutes, seconds: this.state.seconds}), 
-	                React.createElement(ActionControls, null), 
-	                React.createElement(Footer, null)
+	                React.createElement(ActionControls, null)
 	            )
 	        );
 	    }
@@ -19799,11 +19799,11 @@
 
 	    },
 	    render: function(){
-	        var pomoClasses = this.props.mode == PomoConstants.MODE_POMODORO ? "btn btn-danger m-r-1 animated swing" : "btn btn-danger-outline m-r-1";
-	        var shortBreakClasses = this.props.mode == PomoConstants.MODE_SHORT_BREAK ? "btn btn-info m-r-1 animated swing" : "btn btn-info-outline m-r-1";
-	        var longBreakClasses = this.props.mode == PomoConstants.MODE_LONG_BREAK ? "btn btn-info m-r-1 animated swing" : "btn btn-info-outline m-r-1";
+	        var pomoClasses = this.props.mode == PomoConstants.MODE_POMODORO ? "btn btn-danger m-b-1 m-r-1 animated swing" : "btn btn-danger-outline m-b-1 m-r-1";
+	        var shortBreakClasses = this.props.mode == PomoConstants.MODE_SHORT_BREAK ? "btn btn-info m-b-1 m-r-1 animated swing" : "btn btn-info-outline m-b-1 m-r-1";
+	        var longBreakClasses = this.props.mode == PomoConstants.MODE_LONG_BREAK ? "btn btn-info m-b-1 m-r-1 animated swing" : "btn btn-info-outline m-b-1 m-r-1";
 	        return (React.createElement("div", {className: "text-xs-center"}, 
-	            React.createElement("a", {className: "text-muted m-r-1 hint--left", "data-hint": "You can select your timer setup here."}, React.createElement("i", {className: "fa fa-question-circle"})), 
+	            React.createElement("a", {className: "hidden-sm-down text-muted m-r-1 hint--left", "data-hint": "You can select your timer setup here."}, React.createElement("i", {className: "fa fa-question-circle"})), 
 	            React.createElement("a", {className: pomoClasses, onClick: this._onSetPomodoro}, "Pomodoro"), 
 	            React.createElement("a", {className: shortBreakClasses, onClick: this._onSetShortBreak}, "Short Break"), 
 	            React.createElement("a", {className: longBreakClasses, onClick: this._onSetLongBreak}, "Long Break")
@@ -20287,10 +20287,10 @@
 	    },
 	    render: function(){
 	        return (React.createElement("div", {className: "text-xs-center"}, 
-	            React.createElement("a", {className: "text-muted m-r-1 hint--left", "data-hint": "You can start, pause and reset your timer here."}, React.createElement("i", {className: "fa fa-question-circle"})), 
-	            React.createElement("button", {className: "btn btn-success m-r-1", onClick: this._onStart}, "Start"), 
-	            React.createElement("button", {className: "btn btn-default m-r-1", onClick: this._onPause}, "Pause"), 
-	            React.createElement("button", {className: "btn btn-danger", onClick: this._onReset}, "Reset")
+	            React.createElement("a", {className: "hidden-sm-down text-muted m-r-1 hint--left", "data-hint": "You can start, pause and reset your timer here."}, React.createElement("i", {className: "fa fa-question-circle"})), 
+	            React.createElement("button", {className: "btn btn-success m-b-1 m-r-1", onClick: this._onStart}, "Start"), 
+	            React.createElement("button", {className: "btn btn-default m-b-1 m-r-1", onClick: this._onPause}, "Pause"), 
+	            React.createElement("button", {className: "btn btn-danger m-b-1 m-r-1", onClick: this._onReset}, "Reset")
 	            ));
 	    },
 	    _onStart: function() {
@@ -20359,51 +20359,8 @@
 /* 172 */
 /***/ function(module, exports, __webpack_require__) {
 
-	/** @jsx React.DOM */var React = __webpack_require__(1);
-
-	var Footer = React.createClass({displayName: "Footer",
-	    render: function() {
-	        return (
-	            React.createElement("div", null, 
-	                React.createElement("hr", {className: "m-t-3"}), 
-	                React.createElement("div", {className: "m-t-3 row"}, 
-	                    React.createElement("div", {className: "col-sm-6"}, 
-	                        React.createElement("div", null, 
-	                            React.createElement("h4", {className: "m-b-1"}, "What is Pomodoro Technique?"), 
-	                            React.createElement("p", null, "The Pomodoro Technique is a time management method developed by Francesco Cirillo in the late 1980s." + " " +
-	                                "The technique uses a timer to break down work into intervals, traditionally 25 minutes in length," + " " +
-	                                "separated by short breaks. Details can be found ", React.createElement("a", {href: "http://pomodorotechnique.com/", target: "_blank"}, "here"), ".")
-	                        ), 
-	                        React.createElement("div", {className: "m-t-2"}, 
-	                            React.createElement("h4", {className: "m-b-1"}, "Is there a tutorial?"), 
-	                            React.createElement("p", null, "Yes! I am currently writing a tutorial covering both React and Flux.")
-	                        )
-	                    ), 
-	                    React.createElement("div", {className: "col-sm-6"}, 
-	                        React.createElement("div", null, 
-	                            React.createElement("h4", {className: "m-b-1"}, "Simple Instructions"), 
-	                            React.createElement("div", null, "It is really easy to use a pomodoro timer." + " " +
-	                                "First you decide on a task that you need to complete." + " " +
-	                                "After deciding on the task, just select the red pomodoro button up there and press the green ", React.createElement("span", {className: "text-success"}, "START"), " button." + " " +
-	                                "When the timer is finished, you are free to take a break. After 3 short breaks, you may have a long break. "), 
-	                            React.createElement("br", null), 
-	                            React.createElement("p", null, "Rinse and repeat.")
-	                        )
-	                    )
-	                )
-	            )
-	        );
-	    }
-	});
-
-	module.exports = Footer;
-
-/***/ },
-/* 173 */
-/***/ function(module, exports, __webpack_require__) {
-
 	/** @jsx React.DOM */var AppDispatcher = __webpack_require__(163);
-	var EventEmitter = __webpack_require__(174).EventEmitter;
+	var EventEmitter = __webpack_require__(173).EventEmitter;
 	var PomoConstants = __webpack_require__(168);
 	var assign = __webpack_require__(167);
 
@@ -20472,9 +20429,10 @@
 	    getCurrentMode: function() {
 	        return _mode;
 	    },
-	    pomodoroComplete: function() {
-	        console.log("Entered pomodoroComplete!");
-	        _pomodoroCount++;
+	    timerComplete: function() {
+	        if (_mode == PomoConstants.MODE_POMODORO) {
+	            _pomodoroCount++;
+	        }
 	        reset();
 	    },
 	    getPomodoroCount: function() {
@@ -20525,7 +20483,7 @@
 	module.exports = PomoStore;
 
 /***/ },
-/* 174 */
+/* 173 */
 /***/ function(module, exports) {
 
 	/** @jsx React.DOM */// Copyright Joyent, Inc. and other Node contributors.

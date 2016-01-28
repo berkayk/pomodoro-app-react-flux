@@ -6,7 +6,6 @@ var ModeControls = require('./ModeControls.react');
 var ActionControls = require('./ActionControls.react');
 var Timer = require('./Timer.react');
 var PomoCount = require('./PomoCount.react');
-var Footer = require('./Footer.react');
 // Store
 var PomoStore = require('../stores/PomoStore');
 var PomoConstants = require('../constants/PomoConstants');
@@ -50,7 +49,7 @@ var PomodoroApp = React.createClass({
         this.setState(formMinuteSeconds(timeLeft));
 
         if (timeLeft == 0) {
-            PomoStore.pomodoroComplete();
+            PomoStore.timerComplete();
             console.log("Clearing interval.");
             clearInterval(this.interval);
 
@@ -67,9 +66,11 @@ var PomodoroApp = React.createClass({
     componentWillUnmount: function() {
         PomoStore.removeStateChangeListener(this._onChanged);
         PomoStore.removeStateChangeListener(this._onModeChanged);
+        /*
         if (this.interval) {
             clearInterval(this.interval);
         }
+        */
     },
     _onModeChanged: function() {
         console.log("Mode changed.");
@@ -95,7 +96,6 @@ var PomodoroApp = React.createClass({
                 <ModeControls mode={this.state.mode} />
                 <Timer minutes={this.state.minutes} seconds={this.state.seconds}/>
                 <ActionControls />
-                <Footer />
             </div>
         );
     }
