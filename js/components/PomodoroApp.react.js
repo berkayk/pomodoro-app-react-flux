@@ -107,6 +107,7 @@ var PomodoroApp = React.createClass({
                 <ModeControls mode={this.state.mode} />
                 <Timer minutes={this.state.minutes} seconds={this.state.seconds}/>
                 <ActionControls />
+                <audio ref="player" src="assets/sound/clock-short.mp3" />
             </div>
         );
     }

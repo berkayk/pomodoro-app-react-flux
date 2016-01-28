@@ -19760,7 +19760,8 @@
 	                React.createElement(PomoCount, {count: this.state.count}), 
 	                React.createElement(ModeControls, {mode: this.state.mode}), 
 	                React.createElement(Timer, {minutes: this.state.minutes, seconds: this.state.seconds}), 
-	                React.createElement(ActionControls, null)
+	                React.createElement(ActionControls, null), 
+	                React.createElement("audio", {ref: "player", src: "assets/sound/clock-short.mp3"})
 	            )
 	        );
 	    }
@@ -19782,8 +19783,7 @@
 	               React.createElement("h1", {className: "text-xs-center m-a-2"}, 
 	                   React.createElement("img", {width: "50", className: "img m-r-1", src: "assets/img/tomato-small.png"}), 
 	                   React.createElement("span", {className: "text-danger"}, "pomodo"), React.createElement("b", {className: "text-info"}, "react")
-	               ), 
-	               React.createElement("audio", {ref: "player", src: "assets/sound/clock-short.mp3"})
+	               )
 	           )
 	       );
 	   }
